@@ -1,0 +1,51 @@
+[project]
+name = "clubmanager365cli"
+version = "0.1.0"
+description = "CLI and MCP server to log in and book courts on clubmanager365.com"
+readme = "README.md"
+requires-python = ">=3.9"
+license = "Apache-2.0"
+license-files = ["LICENSE"]
+authors = [{ name = "Mingjie Shao" }]
+keywords = ["clubmanager365", "tennis", "court", "booking", "mcp", "cli"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Console",
+    "Intended Audience :: End Users/Desktop",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Utilities",
+]
+dependencies = [
+    "requests>=2.31",
+    "beautifulsoup4>=4.12",
+]
+
+# The MCP server needs the official SDK, which requires Python >=3.10.
+# Installed on demand via `pip install clubmanager365cli[mcp]` or, for end
+# users, `uvx --from clubmanager365cli[mcp] clubmanager365-mcp` (uv provisions
+# a suitable Python automatically). The plain CLI still runs on Python 3.9.
+[project.optional-dependencies]
+mcp = ["mcp>=1.2"]
+
+[project.urls]
+Homepage = "https://github.com/jerry-shao/clubmanager365cli"
+Repository = "https://github.com/jerry-shao/clubmanager365cli"
+Issues = "https://github.com/jerry-shao/clubmanager365cli/issues"
+
+[project.scripts]
+cm365 = "cm365.cli:main"
+clubmanager365-mcp = "cm365.mcp_server:main"
+
+# setuptools >= 77 is needed for the PEP 639 `license`/`license-files` fields.
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["cm365"]

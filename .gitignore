@@ -1,0 +1,15 @@
+# Secrets — never commit real credentials
+credentials.env
+.env
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+*.egg-info/
+build/
+dist/
+
+# Local scratch / saved pages
+*.local.html
+/target
