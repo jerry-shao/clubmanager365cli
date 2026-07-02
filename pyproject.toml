@@ -1,9 +1,9 @@
 [project]
 name = "clubmanager365cli"
-version = "0.1.0"
+version = "0.2.0"
 description = "CLI and MCP server to log in and book courts on clubmanager365.com"
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 license = "Apache-2.0"
 license-files = ["LICENSE"]
 authors = [{ name = "Mingjie Shao" }]
@@ -14,7 +14,6 @@ classifiers = [
     "Intended Audience :: End Users/Desktop",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
@@ -26,10 +25,10 @@ dependencies = [
     "beautifulsoup4>=4.12",
 ]
 
-# The MCP server needs the official SDK, which requires Python >=3.10.
-# Installed on demand via `pip install clubmanager365cli[mcp]` or, for end
-# users, `uvx --from clubmanager365cli[mcp] clubmanager365-mcp` (uv provisions
-# a suitable Python automatically). The plain CLI still runs on Python 3.9.
+# The MCP server needs the official SDK. Installed on demand via
+# `pip install clubmanager365cli[mcp]` or, for end users,
+# `uvx --from clubmanager365cli[mcp] clubmanager365-mcp` (uv provisions a
+# suitable Python automatically).
 [project.optional-dependencies]
 mcp = ["mcp>=1.2"]
 

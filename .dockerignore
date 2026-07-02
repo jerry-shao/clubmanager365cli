@@ -1,0 +1,13 @@
+# NEVER bake credentials into the image
+credentials.env
+.env
+
+.git
+.venv
+__pycache__
+*.pyc
+*.egg-info
+dist
+build
+*.local.html
+.claude

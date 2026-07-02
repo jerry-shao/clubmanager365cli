@@ -5,8 +5,8 @@
 [![License](https://img.shields.io/pypi/l/clubmanager365cli.svg)](LICENSE)
 
 A command-line tool to log in to [clubmanager365.com](https://clubmanager365.com)
-and book courts from the terminal — and an **MCP server** exposing the same
-actions so AI agents can book courts for you.
+and book courts from the terminal — and an **MCP server** (local stdio or
+remote HTTP) exposing the same actions so AI agents can book courts for you.
 
 > Personal automation for your own account. Use responsibly and within your
 > club's terms of use.
@@ -38,13 +38,13 @@ pipx install clubmanager365cli
 cm365 --help
 ```
 
-Or from source, for development:
+Or from source, for development (Python 3.10+):
 
 ```bash
 git clone https://github.com/jerry-shao/clubmanager365cli
 cd clubmanager365cli
-python3 -m venv .venv && source .venv/bin/activate
-pip install -e .
+uv venv --python 3.12 && uv pip install -e ".[mcp]"
+# or: python3 -m venv .venv && .venv/bin/pip install -e ".[mcp]"
 ```
 
 ## Credentials
@@ -104,9 +104,10 @@ cm365 explore [PATH] -o page.local.html   # dump a page's HTML/forms/links
 ## MCP server
 
 The same actions are exposed as an [MCP](https://modelcontextprotocol.io)
-server so an AI assistant (Claude Desktop, Claude Code, …) can book courts for
-you. It runs **locally over stdio with your own credentials** — there is no
-shared/hosted server, so your login never leaves your machine.
+server so an AI assistant (Claude Desktop, Codex, OpenClaw, …) can book courts
+for you. By default it runs **locally over stdio with your own credentials** — no
+shared/hosted server, so your login never leaves your machine. It can also run
+as a [remote HTTP server](#remote-http-mode) with per-request credentials.
 
 Tools: `list_slots`, `my_bookings`, `search_players`, `list_match_types`,
 `book_court`, `cancel_booking`. `book_court` and `cancel_booking` are a **dry
@@ -196,6 +197,74 @@ mcp_servers:
 command = "uvx"
 args = ["--from", "clubmanager365cli[mcp]", "clubmanager365-mcp"]
 env = { CM365_USERNAME = "your-username", CM365_PASSWORD = "your-password" }
+```
+
+### Remote HTTP mode
+
+Set `CM365_MCP_TRANSPORT=http` and the server speaks streamable HTTP instead
+of stdio:
+
+```bash
+CM365_MCP_TRANSPORT=http uvx --from "clubmanager365cli[mcp]" clubmanager365-mcp
+# serves http://127.0.0.1:8000/mcp  (CM365_MCP_HOST / CM365_MCP_PORT to change)
+```
+
+In HTTP mode **each request must carry the caller's own credentials in
+headers** — environment credentials are deliberately ignored (set
+`CM365_HTTP_ENV_FALLBACK=1` to opt back in for a private single-user server):
+
+| Header | Meaning |
+|---|---|
+| `x-cm365-username` | clubmanager365 username (required) |
+| `x-cm365-password` | clubmanager365 password (required) |
+| `x-cm365-base-url` | optional, defaults to `https://clubmanager365.com` |
+
+The SDK's DNS-rebinding Host check is disabled in HTTP mode (a tunnel's public
+hostname isn't known in advance, and sensitive calls need credentials anyway).
+To lock the server to specific hostnames, set
+`CM365_MCP_ALLOWED_HOSTS=mcp.example.com` (comma-separated).
+
+Credentials are used per-request to log in and are never stored server-side.
+
+To expose it publicly without opening ports, use a
+[Cloudflare Tunnel](https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/):
+
+```bash
+cloudflared tunnel --url http://127.0.0.1:8000   # quick tunnel for testing
+```
+
+#### Deploying to a serverless container platform
+
+The included [`Dockerfile`](Dockerfile) runs the server in HTTP mode with
+`CM365_MCP_STATELESS=1` (self-contained requests — required when instances
+scale to zero) and honours the platform's injected `PORT`. No credentials go
+into the image; they arrive per-request via headers. E.g. Google Cloud Run:
+
+```bash
+gcloud run deploy cm365-mcp --source . --region europe-west2 --allow-unauthenticated
+```
+
+The resulting `https://….run.app/mcp` URL is stable — point Smithery at it.
+
+#### Publishing to Smithery
+
+The header scheme matches [Smithery session config](https://smithery.ai/docs),
+so the server can be published to Smithery as a remote server where each user
+fills in their own credentials. Point it at your public `…/mcp` URL — a Cloud
+Run service or a tunnel host both work:
+
+```bash
+smithery mcp publish "https://your-server-host/mcp" --config-schema '{
+  "type": "object",
+  "required": ["username", "password"],
+  "properties": {
+    "username": {"type": "string", "title": "clubmanager365 username",
+                 "x-from": {"header": "x-cm365-username"}},
+    "password": {"type": "string", "format": "password",
+                 "title": "clubmanager365 password",
+                 "x-from": {"header": "x-cm365-password"}}
+  }
+}'
 ```
 
 ## The booking API

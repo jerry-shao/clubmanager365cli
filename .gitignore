@@ -13,3 +13,6 @@ dist/
 # Local scratch / saved pages
 *.local.html
 /target
+
+# uv lockfile — not tracked for this app
+uv.lock
